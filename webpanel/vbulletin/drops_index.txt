@@ -1,0 +1,22 @@
+{vb:stylevar htmldoctype}
+<html xmlns="http://www.w3.org/1999/xhtml" dir="{vb:stylevar textdirection}" lang="{vb:stylevar languagecode}" id="vbulletin_html">
+  <head>
+    <title>{vb:raw vboptions.bbtitle} - {vb:raw pagetitle}</title>
+    {vb:raw headinclude}
+    {vb:raw headinclude_bottom}
+  </head>
+  <body>
+    
+    {vb:raw header}
+    
+    {vb:raw navbar}
+    <!--
+    <div id="pagetitle">
+      <h1>{vb:raw pagetitle}</h1>
+    </div>
+    -->
+    {vb:raw htmlfaggotry}
+    
+    {vb:raw footer}
+  </body>
+</html>
