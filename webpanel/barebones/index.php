@@ -3,9 +3,12 @@ include_once("settings.php");
 require "inc/sharedfunc.php";
 session_start();
 
-$notvb = mysql_connect($host, $user, $pass) or mysql_error();
-mysql_select_db($db, $notvb) or mysql_error($notvb);
-mysql_set_charset("UTF8", $notvb);
+$conn = new mysqli($host, $user, $pass, $db);
+if($conn->connect_errno)
+{
+	die($conn->connect_error);
+}
+$conn->set_charset("utf8mb4");
 
 // ####################### SET PHP ENVIRONMENT ###########################
 error_reporting(E_ALL & ~E_NOTICE);
@@ -30,16 +33,18 @@ chdir ('../');
 ob_start();
 if($_POST['username'] == 'userhere' && $_POST['password'] == 'passwordhere') $_SESSION['logged_in'] = true;
 
-if($_SESSION['logged_in'] && $_GET['ban'] == 1){
-	$res = mysql_query("select * from sprays where filename='".mysql_real_escape_string($_GET['filename'])."' limit 1", $notvb) or die(mysql_error());
-	$row = mysql_fetch_assoc($res);
-	mysql_query("update sprays set banned=1 where filename='{$row['filename']}' limit 1", $notvb) or die(mysql_error());
+if($_SESSION['logged_in'] && $_GET['ban'] == 1)
+{
+	$res = $conn->query("select * from sprays where filename='".$conn->real_escape_string($_GET['filename'])."' limit 1") or die($conn->error);
+	$row = mysqli_fetch_assoc($res);
+	$conn->query("update sprays set banned=1 where filename='{$row['filename']}' limit 1") or die($conn->error);
 }
 
-if($_SESSION['logged_in'] && $_GET['unban'] == 1){
-	$res = mysql_query("select * from sprays where filename='".mysql_real_escape_string($_GET['filename'])."' limit 1", $notvb) or die(mysql_error());
-	$row = mysql_fetch_assoc($res);
-	mysql_query("update sprays set banned=0 where filename='{$row['filename']}' limit 1", $notvb) or die(mysql_error());
+if($_SESSION['logged_in'] && $_GET['unban'] == 1)
+{
+	$res = $conn->query("select * from sprays where filename='".$conn->real_escape_string($_GET['filename'])."' limit 1") or die($conn->error);
+	$row = mysqli_fetch_assoc($res);
+	$conn->query("update sprays set banned=0 where filename='{$row['filename']}' limit 1") or die($conn->error);
 }
 
 $order = $_GET['o'];
@@ -51,9 +56,9 @@ if($order == 'date'){
 $ordersql = 'date DESC, count DESC, firstdate DESC';
 }
 
-$result = mysql_query("SELECT *, UNIX_TIMESTAMP(firstdate) AS t_firstdate, UNIX_TIMESTAMP(date) AS t_date FROM sprays WHERE datediff(NOW(), firstdate) < ".DELETEDAYS." OR datediff(NOW(), date) <".DELETEDAYS." ORDER BY {$ordersql} LIMIT 3000", $notvb) or die(mysql_error());
+$result = $conn->query("SELECT *, UNIX_TIMESTAMP(firstdate) AS t_firstdate, UNIX_TIMESTAMP(date) AS t_date FROM sprays WHERE datediff(NOW(), firstdate) < ".DELETEDAYS." OR datediff(NOW(), date) <".DELETEDAYS." ORDER BY {$ordersql} LIMIT 3000") or die($conn->error);
 
-$servname = gethostbyaddr(gethostbyname ($_SERVER["SERVER_NAME"])); 
+$servname = gethostbyaddr(gethostbyname($_SERVER["SERVER_NAME"])); 
 
 // format the uptime in case the browser doesn't support dhtml/javascript
 // static uptime string
@@ -64,7 +69,7 @@ function format_uptime($seconds) {
   $days = intval($seconds / 86400);
   
   if ($days > 0) {
-    $uptimeString .= $days;
+    $uptimeString = $days;
     $uptimeString .= (($days == 1) ? " day" : " days");
   }
   if ($hours > 0) {
@@ -84,42 +89,54 @@ function format_uptime($seconds) {
 
 // read in the uptime (using exec)
 $uptime = exec("cat /proc/uptime");
-$uptime = split(" ",$uptime);
+$uptime = explode(" ", $uptime);
 $uptimeSecs = $uptime[0];
 
 // get the static uptime
 $staticUptime = "Server Uptime: ".format_uptime($uptimeSecs);
 
-	function get_server_load($windows = 0) {
+	function get_server_load($windows = 0)
+	{
 		$os = strtolower(PHP_OS);
-		if (strpos($os, "win") === false) {
-			if (file_exists("/proc/loadavg")) {
+
+		if (strpos($os, "win") === false)
+		{
+			if (file_exists("/proc/loadavg"))
+			{
 				$load = file_get_contents("/proc/loadavg");
 				$load = explode(' ', $load);
 				return $load[0];
 			}
-		elseif (function_exists("shell_exec")) {
-			$load = explode(' ', `uptime`);
-			return $load[count($load)-1];
-		} else {
-			return "";
-		}
-	}
-	elseif ($windows) {
-		if (class_exists("COM")) {
-			$wmi = new COM("WinMgmts:\\\\.");
-			$cpus = $wmi->InstancesOf("Win32_Processor");
-			$cpuload = 0;
-			$i = 0;
-			while ($cpu = $cpus->Next()) {
-				$cpuload += $cpu->LoadPercentage;
-				$i++;
+			else if (function_exists("shell_exec"))
+			{
+				$load = explode(' ', shell_exec("uptime"));
+				return $load[count($load)-1];
 			}
-			$cpuload = round($cpuload / $i, 2);
-			return $cpuload;
-		} else {
-			return "";
+			else
+			{
+				return "";
+			}
 		}
+		else if ($windows)
+		{
+			if (class_exists("COM"))
+			{
+				$wmi = new COM("WinMgmts:\\\\.");
+				$cpus = $wmi->InstancesOf("Win32_Processor");
+				$cpuload = 0;
+				$i = 0;
+				while ($cpu = $cpus->Next())
+				{
+					$cpuload += $cpu->LoadPercentage;
+					$i++;
+				}
+				$cpuload = round($cpuload / $i, 2);
+				return $cpuload;
+			}
+			else
+			{
+				return "";
+			}
 		}
 	}
 	
@@ -143,7 +160,7 @@ $percentage = $decimalval * 100 / 2;
 			<div id='spraypagination'></div>
 		<div id='notice'>
 		<?php
-			echo "Displaying <b>".mysql_num_rows($result)."</b> sprays from the last ".DELETEDAYS." days.<br /><b>Warning: NSFW</b><br />";
+			echo "Displaying <b>".$result->num_rows."</b> sprays from the last ". DELETEDAYS ." days.<br /><b>Warning: NSFW</b><br />";
 			if($order == 'count'){
 				echo "<a href='/sprays/'>Order by upload date</a> | <a href='/sprays/?o=date'>Order by most recently sprayed</a>";    
 			}	
@@ -152,7 +169,7 @@ $percentage = $decimalval * 100 / 2;
 			} else {
 				echo "<a href='/sprays/?o=count'>Order by amount of times sprayed</a> | <a href='/sprays/?o=date'>Order by most recently sprayed</a>";
 			}
-			if(mysql_num_rows($result) < 1) echo "<p><i>No sprays found</i></p>";
+			if($result->num_rows < 1) echo "<p><i>No sprays found</i></p>";
 		?>
 		</div>
 		</div>
@@ -179,49 +196,70 @@ $servers = array(
 $pages = 1;
 $onpage = 0;
 
-while($row = mysql_fetch_assoc($result)){
+foreach($result as $row)
+{	
+	if((!file_exists("sprays/img/{$row['filename']}.gif") || filesize("sprays/img/{$row['filename']}.gif") < 1024) && (!file_exists("sprays/img/{$row['filename']}.png") || filesize("sprays/img/{$row['filename']}.png") < 1024)) continue;
 	
-	if(!file_exists("sprays/img/{$row['filename']}.gif") || filesize("sprays/img/{$row['filename']}.gif") < 1024) continue;
-	
-	$onpage ++;
-	if($onpage > 24){
-		$pages ++;
+	$onpage++;
+	if($onpage > 24)
+	{
+		$pages++;
 		$onpage = 1;
 		echo "</div><div class='spraypage'>";
 	}
 	
 	$date = date('d/m/Y H:i:s', $row['t_date']);
 	if($row['t_date'] == 0)
+	{
 		$date = "Never";
+	}
 		
 	$firstdate = date('d/m/Y H:i:s', $row['t_firstdate']);
 		
 	$port = intval($row['port']);
 	
 	if(array_key_exists("{$row['ip']}:{$port}", $servers))
+	{
 		$server = $servers["{$row['ip']}:{$port}"];
+	}
 	else
+	{
 		$server = "Unknown Server";
+	}
 
 	$f = steam2friend($row['steamid']);
 	$link = "<a href='http://steamcommunity.com/profiles/{$f}'>{$row['name']}</a>";
 	
 	if($row['banned'] == 0)
-		$av = "/sprays/img/{$row['filename']}.gif";
+	{
+		if(file_exists("sprays/img/{$row['filename']}.png"))
+		{
+			$av = "/sprays/img/{$row['filename']}.png";
+		}
+		else
+		{
+			$av = "/sprays/img/{$row['filename']}.gif";
+		}
+	}
 	else
+	{
 		$av = "/sprays/badspray.png";
+	}
 		
 	$count = $row['count']." time".($count == 1 ? "" : "s");
 	
 	$manager = "";
-	if($row['banned'] == 1) $manager = "<br><strong>Admin blocked spray view</strong>";
+	if($row['banned'] == 1)
+	{
+		$manager = "<br><strong>Admin blocked spray view</strong>";
+	}
 	
 	?>
 	<div class='spray'>
-		<img <?=($pages == 1 ? "src" : "srb")?>='<?=$av?>' alt='' width='256' height='256' title='<strong>Uploaded:</strong> <?=$firstdate?><br><strong>Last sprayed:</strong> <?=$date?><br><strong>Last server: </strong><?=$server?><br><strong>Sprayed:</strong> <?=$count?><?=$manager?>'>
+		<img <?= ($pages == 1 ? "src" : "srb") ?>='<?= $av ?>' alt='' width='256' height='256' title='<strong>Uploaded:</strong> <?= $firstdate ?><br><strong>Last sprayed:</strong> <?= $date ?><br><strong>Last server: </strong><?= $server ?><br><strong>Sprayed:</strong> <?= $count ?><?= $manager ?>'>
 		<div>
-		<?=$link?> <?php if($_SESSION['logged_in'] && $row['banned'] == 1){ ?> &mdash; <a href='?unban=1&filename=<?=$row['filename']?>' alt="\" title='Manager-only option - Unblocks converted spray and Unblocks the spray from being used in the future' style='font-size: 11px'>Unblock</a> &mdash; <a href="/sprays/img/<?=$row['filename']?>.gif" alt="\" title='Manager-only option - Redirects to blocked spray' style='font-size: 11px'>Click to show.</a><?php } ?>
-		<?php if($_SESSION['logged_in'] && $row['banned'] == 0){ ?> &mdash; <a href='?ban=1&filename=<?=$row['filename']?>' title='Blocks the spray from being used in the future' style='font-size: 11px'>Block</a><?php } ?>
+		<?= $link ?> <?php if($_SESSION['logged_in'] && $row['banned'] == 1){ ?> &mdash; <a href='?unban=1&filename=<?= $row['filename'] ?>' alt="\" title='Manager-only option - Unblocks converted spray and Unblocks the spray from being used in the future' style='font-size: 11px'>Unblock</a> &mdash; <a href="<?= $av ?>" alt="\" title='Manager-only option - Redirects to blocked spray' style='font-size: 11px'>Click to show.</a><?php } ?>
+		<?php if($_SESSION['logged_in'] && $row['banned'] == 0){ ?> &mdash; <a href='?ban=1&filename=<?= $row['filename'] ?>' title='Blocks the spray from being used in the future' style='font-size: 11px'>Block</a><?php } ?>
 		</div>
 	</div>		
 	<?php

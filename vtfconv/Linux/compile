@@ -1,2 +1,0 @@
-#!/bin/sh
-gcc vtfconv.c -lIL -o /usr/local/bin/vtfconv
