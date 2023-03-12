@@ -10,7 +10,6 @@
 </head>
 
 <body>
-
     <div align='center'>
         <div class='header'>
             <div id='pages'>
@@ -20,15 +19,17 @@
                     <b>Warning: NSFW</b><br>
 
                 {if $order == 'count' || $order == 'date'}
-                    |&nbsp;<a href='/sprays/'>Order by upload date</a>&nbsp;
+                    <a href='/sprays/'>Order by upload date</a>&nbsp;|&nbsp;
                 {/if}
                 {if $order != 'count'}
-                    |&nbsp;<a href='/sprays/?o=count'>Order by amount of times sprayed</a>&nbsp;
+                    <a href='/sprays/?order=count'>Order by amount of times sprayed</a>
+                {/if}
+                {if $order != 'count' && $order != 'date'}
+                    &nbsp;|&nbsp;
                 {/if}
                 {if $order != 'date'}
-                    |&nbsp;<a href='/sprays/?o=date'>Order by most recently sprayed</a>&nbsp;
+                    <a href='/sprays/?order=date'>Order by most recently sprayed</a>
                 {/if}
-                    |
 
                 {if $num_rows == 0}
                     <p><i>No sprays found</i></p>
@@ -47,68 +48,51 @@
         </div>
         <br>
         <div id='sprays'>
-        {$pages = 0}
-        {foreach $sprays as $assoc}
-            {if gettype($assoc) == 'integer'}
-                {$pages = $assoc['pages']}
-            {/if}
-            {if $assoc['onpage'] == 0}
             <div class='spraypage'>
-            {/if}
+            {foreach $sprays as $assoc}
                 <div class='spray'>
                     <img
-                    {if $assoc['pages'] == 1}
-                        src="{$assoc['img_src']}"
-                    {else}
-                        srb="{$assoc['img_src']}"
-                    {/if}
+                        srb='{($assoc['banned']) ? 'badspray.png' : "img/{$assoc['filename']}.png"}'
                         alt=''
                         width='256'
                         height='256'
-                        title='<strong>Uploaded:</strong>{$assoc['row']['firstdate_ts']|date_format:'%Y/%m/%d %H:%M:%S'}<br>
-                    {if $assoc['row']['date_ts']}
-                               <strong>Last sprayed:</strong>{$assoc['row']['date_ts']|date_format:'%Y/%m/%d %H:%M:%S'}<br>
-                    {else}
-                               <strong>Last sprayed:</strong>Never<br>
-                    {/if}
+                        title='<strong>Uploaded: </strong>{$assoc['firstdate_ts']|date_format:'%Y/%m/%d %H:%M:%S'}<br>
+                               <strong>Last sprayed: </strong>{($assoc['date_ts']) ? ($assoc['date_ts']|date_format:'%Y/%m/%d %H:%M:%S') : 'Never'}<br>
                                <strong>Last server: </strong>{$assoc['server']}<br>
-                               <strong>Sprayed:</strong><?= $count ?>
-                    {if $assoc['row']['banned']}
-                        <br><strong>Admin blocked spray view</strong>
-                    {/if}'
-                    >
+                               <strong>Sprayed: </strong>{$assoc['count']} {($assoc['count'] <= 1) ? 'time' : 'times'}
+                               {($assoc['banned']) ? '<br><strong>Admins have blocked the spray from viewing.</strong>' : ''}'>
                     <div>
-                        <a href='http://steamcommunity.com/profiles/{$assoc['steamid64']}'>{$assoc['row']['name']}</a>
+                        <a href='http://steamcommunity.com/profiles/{$assoc['steamid64']}'>{$assoc['name']}</a>
                         &mdash;
-                        <a style='font-size: 11px' href='javascript:copy2clipboard("{$assoc['row']['steamid']}")'>copy</a>
+                        <a style='font-size: 11px' href='javascript:copy2clipboard("{$assoc['steamid']}")'>copy</a>
             {if $_SESSION['logged_in']}
-                {if $assoc['row']['banned']}
+                {if $assoc['banned']}
                         &mdash;
-                        <a href='?unban=1&steamid={$assoc['row']['steamid']}&filename={$assoc['row']['filename']}' alt="\"
+                        <a href='?unban=1&steamid={$assoc['steamid']}&filename={$assoc['filename']}' alt="\"
                         title='Manager-only option - Unblocks converted spray and Unblocks the spray from being used in the future'
                         style='font-size: 11px'>
                         Unblock
                         </a>
                         &mdash;
-                        <a href="{$assoc['img']}" alt="\"
+                        <a href='img/{$assoc['filename']}.png' alt='\' target='_blank'
                         title='Manager-only option - Redirects to blocked spray' style='font-size: 11px'>
                         Click to show.
                         </a>
                 {else}
-                        &mdash; <a href='?ban=1&steamid={$assoc['row']['steamid']}&filename={$assoc['row']['filename']}'
+                        &mdash; <a href='?ban=1&steamid={$assoc['steamid']}&filename={$assoc['filename']}'
                         title='Blocks the spray from being used in the future' style='font-size: 11px'>Block</a>
                 {/if}
                     
             {/if}
                     </div>
                 </div>
-            {if $assoc['onpage'] == 0}
+            {if $assoc['onpage'] == 23}
             </div>
+            <div class='spraypage'>
             {/if}
-        {/foreach}
+            {/foreach}
+            </div>
         </div>
-
-
     </div>
 
     <script type='text/javascript' src='js/jquery.js'></script>
@@ -118,7 +102,7 @@
         // <![CDATA[
         $(document).ready(function() {
             $("#spraypagination").paginate({
-                count: parseInt("<?= $pages ?>", 10) || 1,
+                count: $('#sprays .spraypage').length,
                 start: 1,
                 display: 15,
                 border: true,
@@ -143,6 +127,9 @@
                 track: true,
                 showURL: false
             });
+            $(".spraypage:visible img").each(function() {
+                $(this).attr("src", $(this).attr("srb"));
+            });
         });
 
         function copy2clipboard(str) {
@@ -150,7 +137,6 @@
         }
         // ]]>
     </script>
-
 </body>
 
 </html>

@@ -1,7 +1,7 @@
 <?php
 require('vendor/autoload.php');
 
-include_once("settings.php");
+require_once("settings.php");
 require("inc/sharedfunc.php");
 session_start();
 
@@ -15,14 +15,12 @@ try {
 // ####################### SET PHP ENVIRONMENT ###########################
 error_reporting(E_ALL & ~E_NOTICE);
 
-ob_start();
-
 require("inc/session.php");
 
 $query_string = "SELECT *, UNIX_TIMESTAMP(`firstdate`) AS `firstdate_ts`, UNIX_TIMESTAMP(`date`) AS `date_ts` FROM `sprays`";
 
 $deletedays = intval($_GET['deletedays']);
-if( $deletedays <= 0) {
+if ($deletedays <= 0) {
 	$deletedays = Constants::DELETEDAYS;
 }
 $query_string .= " WHERE (datediff(NOW(), `firstdate`) < {$deletedays} OR datediff(NOW(), `date`) < {$deletedays})";
@@ -59,6 +57,8 @@ $smarty->setConfigDir('smarty/configs');
 $smarty->setTemplateDir('smarty/templates');
 $smarty->setCompileDir('smarty/templates_c');
 
+$smarty->assign('_SESSION', $_SESSION);
+
 $smarty->assign('SERVER_NAME', Constants::SERVER_NAME);
 
 $smarty->assign('deletedays', $deletedays, true);
@@ -75,26 +75,25 @@ function spray_generator() {
 	$pages = 1;
 	$onpage = 0;
 
-	while($row = $stmt->fetch()) {
-		if(!file_exists("img/{$row['filename']}.png")) {
+	while ($row = $stmt->fetch()) {
+		if (!file_exists("img/{$row['filename']}.png")) {
 			continue;
 		}
-		if(filesize("img/{$row['filename']}.png") < 1024) {
-			continue;
-		}
+//		if(filesize("img/{$row['filename']}.png") < 1024) {
+//			continue;
+//		}
 
-		$assoc = [ 'row' => $row ];
+		$assoc = $row;
 
-		$assoc['pages'] = $pages;
 		$assoc['onpage'] = $onpage;
 
 		$onpage += 1;
-		if($onpage == 24) {
+		if ($onpage == 24) {
 			$pages += 1;
 			$onpage = 0;
 		}
-		
-		if(isset(Constants::SERVERS["{$row['ip']}:{$row['port']}"])) {
+
+		if (isset(Constants::SERVERS["{$row['ip']}:{$row['port']}"])) {
 			$assoc['server'] = Constants::SERVERS["{$row['ip']}:{$row['port']}"];
 		} else {
 			$assoc['server'] = 'Unknown Server';
@@ -102,21 +101,12 @@ function spray_generator() {
 
 		$assoc['steamid64'] = steam2friend($row['steamid']);
 
-		if ($row['banned']) {
-			$assoc['img_src'] = 'badspray.png';
-		} else {
-			$assoc['img_src'] = "img/{$row['filename']}.png";
-		}
-
-		$assoc['img'] = "img/{$row['filename']}.png";
-
-		$assoc['count'] = $row['count'] . " time" . ($row['count'] == 1 ? "" : "s");
-		
 		yield $assoc;
 	}
-
-	yield $pages;
 }
 
 $smarty->assign('sprays', spray_generator());
+
+ob_start();
 $smarty->display('index.tpl');
+ob_end_flush();

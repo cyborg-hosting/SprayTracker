@@ -1,11 +1,11 @@
 body {
-	background: #bbb url('http://www.facepunch.com/fp/bg.png');
+	background: #bbb;
 	color: #444;
 	font: 10pt Tahoma;
 }
 
 .header {
-	background: #FFF url('http://www.facepunch.com/fp/navbg.png');
+	background: #FFF;
 	width: 1200px;
 	height: 100px;
 	margin-top: 20px;
