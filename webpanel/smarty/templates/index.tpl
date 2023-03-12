@@ -68,7 +68,7 @@
             {if $_SESSION['logged_in']}
                 {if $assoc['banned']}
                         &mdash;
-                        <a href='?unban=1&steamid={$assoc['steamid']}&filename={$assoc['filename']}' alt="\"
+                        <a href='?unban=1&steamid={$assoc['steamid']}&filename={$assoc['filename']}&order={$order}' alt="\"
                         title='Manager-only option - Unblocks converted spray and Unblocks the spray from being used in the future'
                         style='font-size: 11px'>
                         Unblock
@@ -79,7 +79,7 @@
                         Click to show.
                         </a>
                 {else}
-                        &mdash; <a href='?ban=1&steamid={$assoc['steamid']}&filename={$assoc['filename']}'
+                        &mdash; <a href='?ban=1&steamid={$assoc['steamid']}&filename={$assoc['filename']}&order={$order}'
                         title='Blocks the spray from being used in the future' style='font-size: 11px'>Block</a>
                 {/if}
                     
