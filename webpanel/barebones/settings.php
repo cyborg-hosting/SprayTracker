@@ -1,16 +1,20 @@
 <?php
-		
-		// downloader and converter settings																							make sure this directory has permissions set, to 777 (read/write) to be exact. */
-		
-        define("DELETEDAYS", "7"); // the amount of days sprays are to be saved.
-		
-		// --MYSQL SETTINGS-- //
-		
-		// Set these to the SQL server you're using for the sprays.
-		
-		$user = "";
-		$pass = "";
-		$db = "";
-		$host = "";
-		
-?>
+
+class Constants {
+    const DELETEDAYS = 365;
+    const LIMIT = 3000;
+}
+
+// --PDO SETTINGS-- //
+
+// Set these to the SQL server you're using for the sprays.
+
+$dsn = "mysql:host=db;port=3306;dbname=spray;charset=utf8mb4";
+
+$pdo_username = "";
+$pdo_password = "";
+
+// --LOGIN SETTINGS-- //
+
+$login_username = "";
+$login_password = "";
