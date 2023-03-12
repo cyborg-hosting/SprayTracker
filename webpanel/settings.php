@@ -1,8 +1,13 @@
 <?php
 
 class Constants {
+    const SERVER_NAME = "Facepunch TF2";
     const DELETEDAYS = 365;
     const LIMIT = 3000;
+    const DATE_FORMAT = 'Y/m/d H:i:s';
+
+    const SERVERS = [
+    ];
 }
 
 // --PDO SETTINGS-- //
