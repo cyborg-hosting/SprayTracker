@@ -68,7 +68,7 @@
             {if $_SESSION['logged_in']}
                 {if $assoc['banned']}
                         &mdash;
-                        <a href='?unban=1&steamid={$assoc['steamid']}&filename={$assoc['filename']}&order={$order}' alt="\"
+                        <a href='#' onclick='unban(this)' data-steamid='{$assoc['steamid']}' data-filename='{$assoc['filename']}' alt="\"
                         title='Manager-only option - Unblocks converted spray and Unblocks the spray from being used in the future'
                         style='font-size: 11px'>
                         Unblock
@@ -79,7 +79,7 @@
                         Click to show.
                         </a>
                 {else}
-                        &mdash; <a href='?ban=1&steamid={$assoc['steamid']}&filename={$assoc['filename']}&order={$order}'
+                        &mdash; <a href='#' onclick='ban(this)' data-steamid='{$assoc['steamid']}' data-filename='{$assoc['filename']}'
                         title='Blocks the spray from being used in the future' style='font-size: 11px'>Block</a>
                 {/if}
                     
@@ -100,10 +100,29 @@
     <script type='text/javascript' src='js/jquery.tooltip.js'></script>
     <script type='text/javascript'>
         // <![CDATA[
+        function getUrlParameter(sParam) {
+            var sURLVariables = window.location.search.substring(1).split('&'),
+                sParameterName;
+
+            for (var i = 0; i < sURLVariables.length; i++) {
+                sParameterName = sURLVariables[i].split('=');
+
+                if (sParameterName[0] === sParam) {
+                    return sParameterName[1] === undefined ? true : decodeURIComponent(sParameterName[1]);
+                }
+            }
+            return false;
+        };
+
+        var currentPage = getUrlParameter('page');
+        if (currentPage === false) {
+            currentPage = 1;
+        }
+
         $(document).ready(function() {
             $("#spraypagination").paginate({
                 count: $('#sprays .spraypage').length,
-                start: 1,
+                start: currentPage,
                 display: 15,
                 border: true,
                 border_color: '#ccc',
@@ -115,13 +134,14 @@
                 images: true,
                 mouse: 'press',
                 onChange: function(page) {
+                    currentPage = page;
                     $(".spraypage").hide().eq(page - 1).show();
                     $(".spraypage:visible img").each(function() {
                         $(this).attr("src", $(this).attr("srb"));
                     });
                 }
             });
-            $(".spraypage").eq(0).show();
+            $(".spraypage").eq(currentPage - 1).show();
             $(".spray > img").tooltip({
                 delay: 0,
                 track: true,
@@ -131,6 +151,20 @@
                 $(this).attr("src", $(this).attr("srb"));
             });
         });
+
+        function unban(element) {
+            var steamid = $(element).attr('data-steamid');
+            var filename = $(element).attr('data-filename');
+
+            window.location.href = '?unban=1&steamid=' + steamid + '&filename=' + filename + '&page=' + currentPage + '&order={$order|escape:'javascript'}';
+        }
+
+        function ban(element) {
+            var steamid = $(element).attr('data-steamid');
+            var filename = $(element).attr('data-filename');
+
+            window.location.href = '?ban=1&steamid=' + steamid + '&filename=' + filename + '&page=' + currentPage + '&order={$order|escape:'javascript'}';
+        }
 
         function copy2clipboard(str) {
             navigator.clipboard.writeText(str);
