@@ -21,7 +21,7 @@ Database g_hDatabase = null;
 
 static const char g_sUpdateQuery[] = "UPDATE `sprays` SET `date` = NOW(), `name` = '%s', `ip` = '%s', `port` = '%s', `count` = `count` + 1 WHERE `steamid` = '%s' AND `filename` = '%s' LIMIT 1;";
 static const char g_sSelectQuery[] = "SELECT 1 FROM `sprays` WHERE `steamid` = '%s' AND `filename` = '%s' AND `banned`;";
-static const char g_sInsertQuery[] = "INSERT IGNORE INTO `sprays` (`steamid`, `name`, `ip`, `port`, `filename`, `firstdate`) VALUES ('%s', '%s', '%s', %s', '%s', NOW())";
+static const char g_sInsertQuery[] = "INSERT IGNORE INTO `sprays` (`steamid`, `name`, `ip`, `port`, `filename`, `firstdate`) VALUES ('%s', '%s', '%s', '%s', '%s', NOW())";
 
 public Plugin myinfo = 
 {
